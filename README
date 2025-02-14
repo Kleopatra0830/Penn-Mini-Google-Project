@@ -1,73 +1,131 @@
-# PennGo -- A Google flavor search engine
+# PennGO - A Cloud-Based Search Engine
 
-To run Crawler independently:
-# Compiles all Java files in the src/cis5550 directory with classpath set to src
+## Overview
+PennGO is a robust and scalable cloud-based search engine developed as part of the CIS 5550 course at the University of Pennsylvania. Our system efficiently crawls, indexes, and ranks web pages, providing users with relevant search results through a user-friendly frontend. We focused on scalability, fault tolerance, and an optimized ranking algorithm to enhance performance.
+
+## Team Members
+- **Xiaowei Wu** - Web Crawler Development
+- **Minyi Hu** - Indexer & PageRank
+- **Haochen Gao** - Ranking Algorithm
+- **Jinwei Bi** - Frontend Development
+
+## Features
+### Core Functionality
+- **Web Crawling**: Efficient crawling of web pages with URL prioritization and adherence to web standards.
+- **Indexing & PageRank**: Data processing pipeline using FlameRDD to generate indices and PageRank scores.
+- **Ranking Algorithm**: Combining TF-IDF, PageRank, and title matching for accurate search results.
+- **Frontend Interface**: Google-like UI with features such as autocomplete, predictive search, and spell check.
+
+### Advanced Features
+- **Scalable Architecture**: Distributed key-value store (KVS) with replication for high availability.
+- **Fault Tolerance**: System can recover from failures using state-saving techniques.
+- **Parallel Processing**: Multi-threaded crawling and indexing to handle large-scale data.
+- **Voice Search & Location-Based Results (Future Enhancements)**
+
+## System Architecture
+### 1. Search Service
+- Stores indices, PageRank values, and raw web pages in a distributed storage cluster.
+- Scalable by adding more workers and frontend servers.
+- KVS Coordinator serves as a central control but may become a bottleneck at scale.
+
+### 2. Data Processing Pipeline
+- Uses FlameRDD and distributed workers for parallel execution.
+- Steps:
+  1. **Crawling** - Gathering raw data.
+  2. **Indexing** - Generating structured indices and storing intermediate data.
+  3. **PageRank Calculation** - Ranking pages based on links and relevance.
+  4. **Final Storage** - Processed data stored in the search system database.
+
+### 3. Ranking Algorithm
+- Uses **TF-IDF**, **PageRank**, and **Title Match Score**.
+- Final ranking score formula:
+  
+  ```
+  Score = (TF-IDF * PageRank) + Title Match Score
+  ```
+- Results sorted in descending order of score.
+
+## Performance Evaluation
+### Single Node Performance
+- **10 Threads**: ~2-3 pages/sec
+- **20 Threads**: ~4-5 pages/sec
+- **30 Threads**: ~6-7 pages/sec (plateau due to resource limits)
+
+### Multi-Node Performance
+- **2 Nodes (10 threads each)**: ~4-6 pages/sec (near-linear scaling)
+- **3 Nodes (10 threads each)**: ~6-8 pages/sec
+- **More Nodes**: Continued scaling, but performance varied based on website complexity.
+
+### Search Performance
+- Results consistently returned within ~3 seconds.
+- High relevance of search results with no crashes observed.
+
+## Setup and Deployment
+### Prerequisites
+Ensure you have:
+- Java Development Kit (JDK)
+- Apache Spark (for FlameRDD)
+- AWS EC2 or local machine for deployment
+
+### Running the Crawler
+```sh
 javac -cp "libs/*" src/cis5550/*/*.java
-
-# Creates a JAR file named crawler.jar containing the compiled classes from the src directory
 jar cvf crawler.jar -C src/ .
-
-# Starts the Key-Value Store Coordinator listening on port 8000
 java -cp src cis5550.kvs.Coordinator 8000
-
-# Removes any existing data in worker1 directory and starts a Key-Value Store Worker on port 8001, registering it with the Coordinator at localhost:8000
-rm -rf worker1; 
-java -cp src cis5550.kvs.Worker 8001 worker1 localhost:8000
-
-# Starts the Flame Coordinator on port 9000, registering it with the KVS Coordinator at localhost:8000
+rm -rf worker1; java -cp src cis5550.kvs.Worker 8001 worker1 localhost:8000
 java -cp src cis5550.flame.Coordinator 9000 localhost:8000
-
-# Starts a Flame Worker on port 9001, registering it with the Flame Coordinator at localhost:9000
 java -cp src cis5550.flame.Worker 9001 localhost:9000
-
-# Submits the Crawler job to the Flame framework, specifying the seed URL(s) for the crawl
 java -cp src cis5550.flame.FlameSubmit localhost:9000 crawler.jar cis5550.jobs.Crawler [seed url]
+```
 
-Each line executes a specific function in the setup and running of our crawler, from compilation to deployment on the Flame framework. Ensure you replace `[seed url]` with the actual URL(s) you want the crawler to start from.
-
-To run indexer:
+### Running the Indexer
+```sh
 javac -cp lib/webserver.jar:lib/kvs.jar:lib/flame.jar --source-path src src/cis5550/jobs/Indexer.java
 jar cvf indexer.jar -C src .
 java -cp lib/kvs.jar:lib/webserver.jar:classes cis5550.kvs.Coordinator 8000
 java -cp lib/kvs.jar:lib/webserver.jar:classes cis5550.kvs.Worker 8001 worker1 localhost:8000
 java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar:classes cis5550.flame.Coordinator 9000 localhost:8000
- java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar:classes cis5550.flame.Worker 9001 localhost:9000
- java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar cis5550.flame.FlameSubmit localhost:9000 indexer.jar cis5550.jobs.Indexer
+java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar:classes cis5550.flame.Worker 9001 localhost:9000
+java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar cis5550.flame.FlameSubmit localhost:9000 indexer.jar cis5550.jobs.Indexer
+```
 
-To run pagerank:
+### Running PageRank Calculation
+```sh
 javac -cp lib/webserver.jar:lib/kvs.jar:lib/flame.jar --source-path src src/cis5550/jobs/PageRank.java
 jar cvf pagerank.jar -C src .
 java -cp lib/kvs.jar:lib/webserver.jar:classes cis5550.kvs.Coordinator 8000
 java -cp lib/kvs.jar:lib/webserver.jar:classes cis5550.kvs.Worker 8001 worker1 localhost:8000
 java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar:classes cis5550.flame.Coordinator 9000 localhost:8000
- java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar:classes cis5550.flame.Worker 9001 localhost:9000
- java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar cis5550.flame.FlameSubmit localhost:9000 pagerank.jar cis5550.jobs.PageRank
+java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar:classes cis5550.flame.Worker 9001 localhost:9000
+java -cp lib/kvs.jar:lib/webserver.jar:lib/flame.jar cis5550.flame.FlameSubmit localhost:9000 pagerank.jar cis5550.jobs.PageRank
+```
 
-To run frontend server (rank server)
-# First compile all the java file
+### Running the Frontend Search Engine
+```sh
 javac -cp "libs/*" src/cis5550/*/*.java
-# In 23fa-CIS5550-PennGo directory, use 
-java -cp "libs/*:src" cis5550.ranking.RankerDriver 2333 localhost:8000 
-# to start the ranker driver. Note that the form of the command should be  java -cp ".:libs/*" 
-# cis5550.ranking.RankerDriver <ranker port> <kvs address>, port number and kvs address should 
-# be replaced to your own configuration. “libs” must be included to enable json array and jsoup
+java -cp "libs/*:src" cis5550.ranking.RankerDriver 2333 localhost:8000
+```
 
-Deployment info:
-Search Service: penngo.cis5550.net:2333
+## Deployment Information
+### Search Service
+- **Search Endpoint**: `penngo.cis5550.net:2333`
+- **KVS Coordinator**: `penngo.cis5550.net:8000`
+- **KVS Workers**: `penngo.cis5550.net:8001-8003`
 
-Search Service Components:
-KVS Coordinator 1: penngo.cis5550.net:8000
-KVS Worker 1: penngo.cis5550.net:8001
-KVS Worker 2: penngo.cis5550.net:8002
-KVS Worker 3: penngo.cis5550.net:8003
+### Data Processing (Now Closed)
+- **KVS Coordinator 2**: `penngo.cis5550.net:2000`
+- **Flame Coordinator**: `penngo.cis5550.net:3000`
+- **Flame Workers**: `penngo.cis5550.net:3001-3003`
 
-Data processing: (Now closed)
-KVS Coordinator 2: penngo.cis5550.net:2000
-KVS Worker 4: penngo.cis5550.net:2001
-KVS Worker 5: penngo.cis5550.net:2002
-KVS Worker 6: penngo.cis5550.net:2003
+## Future Enhancements
+- **Voice Search**: Enables search via voice commands.
+- **Location-Based Search**: Results tailored to user location.
+- **Improved JavaScript Handling**: Enhance crawler capability for dynamic web pages.
+- **Optimized Memory Management**: Reduce overhead during high-load operations.
 
-Flame Coordinator: penngo.cis5550.net:3000
-Flame Worker 1: penngo.cis5550.net:3001
-Flame Worker 1: penngo.cis5550.net:3002
-Flame Worker 1: penngo.cis5550.net:3003
+## Conclusion
+PennGO successfully demonstrated an efficient, scalable, and distributed search engine architecture. Future improvements will focus on enhancing the crawler, refining ranking algorithms, and introducing advanced search features.
+
+---
+**Developed by:** Xiaowei Wu, Minyi Hu, Jinwei Bi, Haochen Gao - CIS 5550, University of Pennsylvania
+
