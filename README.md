@@ -3,12 +3,6 @@
 ## Overview
 PennGO is a robust and scalable cloud-based search engine developed as part of the CIS 5550 course at the University of Pennsylvania. Our system efficiently crawls, indexes, and ranks web pages, providing users with relevant search results through a user-friendly frontend. We focused on scalability, fault tolerance, and an optimized ranking algorithm to enhance performance.
 
-## Team Members
-- **Xiaowei Wu** - Web Crawler Development
-- **Minyi Hu** - Indexer & PageRank
-- **Haochen Gao** - Ranking Algorithm
-- **Jinwei Bi** - Frontend Development
-
 ## Features
 ### Core Functionality
 - **Web Crawling**: Efficient crawling of web pages with URL prioritization and adherence to web standards.
@@ -126,6 +120,4 @@ java -cp "libs/*:src" cis5550.ranking.RankerDriver 2333 localhost:8000
 ## Conclusion
 PennGO successfully demonstrated an efficient, scalable, and distributed search engine architecture. Future improvements will focus on enhancing the crawler, refining ranking algorithms, and introducing advanced search features.
 
----
-**Developed by:** Xiaowei Wu, Minyi Hu, Jinwei Bi, Haochen Gao - CIS 5550, University of Pennsylvania
 
