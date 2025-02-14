@@ -1,0 +1,17 @@
+---
+:id: 221011536
+:submitters:
+- :name: Jinwei Bi
+  :email: bijinwei@seas.upenn.edu
+- :name: Minyi Hu
+  :email: huminyi@seas.upenn.edu
+- :name: Xiaowei Wu
+  :email: sherrywx@seas.upenn.edu
+- :name: Haochen Gao
+  :email: hcgao@seas.upenn.edu
+:created_at: !ruby/object:ActiveSupport::TimeWithZone
+  utc: 2023-12-19 00:55:53.550789000 Z
+  zone: !ruby/object:ActiveSupport::TimeZone
+    name: America/Los_Angeles
+  time: 2023-12-18 16:55:53.550789000 Z
+:status: processed
